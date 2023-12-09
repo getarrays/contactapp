@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const toastConfig = {
     position: toast.POSITION.TOP_RIGHT,
@@ -8,7 +8,7 @@ const toastConfig = {
     pauseOnHover: true,
     draggable: true,
     progress: undefined,
-    theme: "light",
+    theme: "light"
 };
 
 export function toastInfo(message) {

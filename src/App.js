@@ -1,14 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
-import { Routes, Route, Navigate } from "react-router-dom"
-import { getContacts, saveContact, updatePhoto } from './api/ContactService';
-import { toastError, toastSuccess } from './api/ToastService';
-import { ToastContainer } from 'react-toastify';
-import "react-toastify/dist/ReactToastify.css";
-import Header from './components/Header';
-import ContactList from './components/ContactList';
+import { useEffect, useRef, useState } from 'react';
+import 'react-toastify/dist/ReactToastify.css';
+import Header from './components/Header'
+import ContactList from './components/ContactList'
+import { getContacts, saveContact, udpatePhoto } from './api/ContactService';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ContactDetail from './components/ContactDetail';
+import { toastError } from './api/ToastService';
+import { ToastContainer } from 'react-toastify';
 
-const App = () => {
+function App() {
   const modalRef = useRef();
   const fileRef = useRef();
   const [data, setData] = useState({});
@@ -23,21 +23,20 @@ const App = () => {
     status: '',
   });
 
-  const onChange = (event) => {
-    setValues({ ...values, [event.target.name]: event.target.value })
-  }
-
-  const getAllContacts = async (page = 0, size = 12) => {
+  const getAllContacts = async (page = 0, size = 10) => {
     try {
       setCurrentPage(page);
       const { data } = await getContacts(page, size);
       setData(data);
       console.log(data);
-      // toastSuccess(data?.content?.length > 0 ? 'Conacts retrived' : 'No contacts found');
     } catch (error) {
       console.log(error);
       toastError(error.message);
-     }
+    }
+  };
+
+  const onChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
   };
 
   const handleNewContact = async (event) => {
@@ -47,21 +46,18 @@ const App = () => {
       const formData = new FormData();
       formData.append('file', file, file.name);
       formData.append('id', data.id);
-      const { data: photoUrl } = await updatePhoto(formData);
-      //setData((prev) => ({ ...prev, totalElements: prev.totalElements + 1, content: [{ ...data, photoUrl }, ...prev.content] }));
+      const { data: photoUrl } = await udpatePhoto(formData);
       toggleModal(false);
-      console.log(data);
+      setFile(undefined);
+      fileRef.current.value = null;
       setValues({
         name: '',
         email: '',
         phone: '',
         address: '',
         title: '',
-        status: ''
-      });
-      setFile(undefined);
-      fileRef.current.value = null;
-      toastSuccess('Contact created');
+        status: '',
+      })
       getAllContacts();
     } catch (error) {
       console.log(error);
@@ -70,38 +66,25 @@ const App = () => {
   };
 
   const updateContact = async (contact) => {
-      try {
-          const { data } = await saveContact(contact);
-          setData((prev) => {
-            prev.content[prev.content.findIndex((contact => contact.id === data.id))] = data;
-            return { ...prev, content: [...prev.content] };
-          });
-          console.log(data);
-          toastSuccess('Contact updated');
-      } catch (error) {
-        console.log(error);
-          toastError(error.message);
-       }
+    try {
+      const { data } = await saveContact(contact);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+      toastError(error.message);
+    }
   };
 
   const updateImage = async (formData) => {
     try {
-        const { data: photoUrl } = await updatePhoto(formData);
-        const contactIndex = data.content.findIndex((contact => contact.id === formData.get('id')));
-        const updatedContact = data.content[contactIndex];
-        updatedContact.photoUrl = `${photoUrl}?time=${new Date().getTime()}`;
-        setData((prev) => {
-          prev.content[contactIndex] = updatedContact;
-          return { ...prev, content: [...prev.content] };
-        });
-        console.log(data)
-        toastSuccess('Photo updated');
+      const { data: photoUrl } = await udpatePhoto(formData);
     } catch (error) {
-        toastError(error.message);
-     }
-};
+      console.log(error);
+      toastError(error.message);
+    }
+  };
 
-  const toggleModal = (show) => show ? modalRef.current.showModal() : modalRef.current.close();
+  const toggleModal = show => show ? modalRef.current.showModal() : modalRef.current.close();
 
   useEffect(() => {
     getAllContacts();
@@ -110,10 +93,10 @@ const App = () => {
   return (
     <>
       <Header toggleModal={toggleModal} nbOfContacts={data.totalElements} />
-      <main className="main">
-        <div className="container">
+      <main className='main'>
+        <div className='container'>
           <Routes>
-            <Route path="/" element={<Navigate to={'/contacts'} />} />
+            <Route path='/' element={<Navigate to={'/contacts'} />} />
             <Route path="/contacts" element={<ContactList data={data} currentPage={currentPage} getAllContacts={getAllContacts} />} />
             <Route path="/contacts/:id" element={<ContactDetail updateContact={updateContact} updateImage={updateImage} />} />
           </Routes>
@@ -156,11 +139,11 @@ const App = () => {
               </div>
               <div className="file-input">
                 <span className="details">Profile Photo</span>
-                <input type="file" onChange={(event) => setFile(event.target.files[0])} name='photo' ref={fileRef} required />
+                <input type="file" onChange={(event) => setFile(event.target.files[0])} ref={fileRef} name='photo' required />
               </div>
             </div>
             <div className="form_footer">
-              <button type='button' onClick={() => toggleModal(false)} className="btn btn-danger">Cancel</button>
+              <button onClick={() => toggleModal(false)} type='button' className="btn btn-danger">Cancel</button>
               <button type='submit' className="btn">Save</button>
             </div>
           </form>
